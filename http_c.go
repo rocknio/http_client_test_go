@@ -109,7 +109,7 @@ func main() {
 
 	qChan = make(chan int)
 
-	totalCount = 1
+	totalCount = 100
 	for i := 0; i < totalCount; i++ {
 		// go httpGet(*url, i)
 		go httpPost(*url, body, i)
