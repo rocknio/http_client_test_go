@@ -43,18 +43,21 @@ func httpPost(url string, body string) (resp string, err error) {
 	return string(response), nil
 }
 
-func httpGet(url string) (resp string, err error) {
+func httpGet(url string, idx int) {
 	response, err := http.Get(url)
 	if err != nil {
-		return "", errors.New("http get failed")
+		log.Panicf("http get failed")
+		return
 	}
 
 	resBody, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		return "", errors.New("read http response failed")
+		log.Panicf("read http response failed")
+		return
 	}
 
-	return string(resBody), nil
+	fmt.Printf("idx = %d, %s\n", idx, string(resBody))
+	qChan <- 1
 }
 
 func getHTTPBody(filename string) (httpBody string, err error) {
@@ -84,7 +87,7 @@ func main() {
 		return
 	}
 
-	log.Printf("%s", body)
+	log.Printf("%s\n", body)
 
 	//set logfile
 	logFile, logErr := os.OpenFile(*logFileName, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0666)
@@ -97,10 +100,10 @@ func main() {
 
 	qChan = make(chan int)
 
-	totalCount = 1
+	totalCount = 10
 	for i := 0; i < totalCount; i++ {
 		// go httpPost(*url, body)
-		httpGet(*url)
+		go httpGet(*url, i)
 	}
 
 	i := 0
