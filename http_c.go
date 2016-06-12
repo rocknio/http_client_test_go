@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"strconv"
 )
 
 var (
@@ -20,43 +21,51 @@ var (
 	totalCount  int
 )
 
-func httpPost(url string, body string) (resp string, err error) {
+func httpPost(url string, body string, idx int) {
 	client := &http.Client{}
 	bodySlice := []byte(body)
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(bodySlice))
+
+	specURL := url + "?name=" + strconv.Itoa(idx)
+	req, err := http.NewRequest("POST", specURL, bytes.NewBuffer(bodySlice))
 	if err != nil {
-		return "", errors.New("new request failed")
+		log.Printf("new request failed")
+		qChan <- 1
+		return
 	}
 
 	req.Header.Add("Basic", "abcd")
 	ret, err := client.Do(req)
 	if err != nil {
-		return "", errors.New("do request failed")
+		log.Printf("do request failed")
+		qChan <- 1
+		return
 	}
 
 	response, err := ioutil.ReadAll(ret.Body)
 	if err != nil {
-		return "", errors.New("get http response failed")
+		log.Printf("get http response failed")
+		qChan <- 1
+		return
 	}
 
+	log.Printf("idx = %d, %s\n", idx, string(response))
 	qChan <- 1
-	return string(response), nil
 }
 
 func httpGet(url string, idx int) {
 	response, err := http.Get(url)
 	if err != nil {
-		log.Panicf("http get failed")
+		log.Printf("http get failed")
 		return
 	}
 
 	resBody, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		log.Panicf("read http response failed")
+		log.Printf("read http response failed")
 		return
 	}
 
-	fmt.Printf("idx = %d, %s\n", idx, string(resBody))
+	log.Printf("idx = %d, %s\n", idx, string(resBody))
 	qChan <- 1
 }
 
@@ -87,8 +96,6 @@ func main() {
 		return
 	}
 
-	log.Printf("%s\n", body)
-
 	//set logfile
 	logFile, logErr := os.OpenFile(*logFileName, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0666)
 	if logErr != nil {
@@ -98,12 +105,14 @@ func main() {
 	log.SetOutput(logFile)
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds | log.Lshortfile)
 
+	log.Printf("%s\n", body)
+
 	qChan = make(chan int)
 
-	totalCount = 10
+	totalCount = 1
 	for i := 0; i < totalCount; i++ {
-		// go httpPost(*url, body)
-		go httpGet(*url, i)
+		// go httpGet(*url, i)
+		go httpPost(*url, body, i)
 	}
 
 	i := 0

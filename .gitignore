@@ -1,4 +1,6 @@
 http_c
 *.log
 .tags*
-.vscode/
+.vscode
+debug
+.git
