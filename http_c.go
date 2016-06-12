@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -20,6 +21,12 @@ var (
 	qChan       chan int
 	totalCount  int
 )
+
+type smsContent struct {
+	Template  string `json:"template"`
+	DestTelno string `json:"dest_telno"`
+	Content   string `json:"content"`
+}
 
 func httpPost(url string, body string, idx int) {
 	client := &http.Client{}
@@ -85,6 +92,25 @@ func getHTTPBody(filename string) (httpBody string, err error) {
 	return string(content), nil
 }
 
+func parseJSON(content string) {
+	var tmp smsContent
+	json.Unmarshal([]byte(content), &tmp)
+	fmt.Printf("%v", tmp)
+
+	var f interface{}
+	json.Unmarshal([]byte(content), &f)
+	m := f.(map[string]interface{})
+	for k, v := range m {
+		switch vv := v.(type) {
+		case string:
+			fmt.Printf("%v is %v", k, vv)
+
+		default:
+			fmt.Println(k, "is of a type I don't know how to handle")
+		}
+	}
+}
+
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	flag.Parse()
@@ -106,6 +132,7 @@ func main() {
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds | log.Lshortfile)
 
 	log.Printf("%s\n", body)
+	parseJSON(body)
 
 	qChan = make(chan int)
 
