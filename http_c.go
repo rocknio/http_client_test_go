@@ -14,13 +14,13 @@ import (
 
 var (
 	logFileName = flag.String("log", "http_c.log", "Log file name")
-	url         = flag.String("url", "http://192.168.1.200:7000/sms", "http url")
+	url         = flag.String("url", "http://192.168.1.8:9000/", "http url")
 	bodyFile    = flag.String("body", "body.json", "http body data")
 	qChan       chan int
 	totalCount  int
 )
 
-func httpGet(url string, body string) (resp string, err error) {
+func httpPost(url string, body string) (resp string, err error) {
 	client := &http.Client{}
 	bodySlice := []byte(body)
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(bodySlice))
@@ -41,6 +41,20 @@ func httpGet(url string, body string) (resp string, err error) {
 
 	qChan <- 1
 	return string(response), nil
+}
+
+func httpGet(url string) (resp string, err error) {
+	response, err := http.Get(url)
+	if err != nil {
+		return "", errors.New("http get failed")
+	}
+
+	resBody, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return "", errors.New("read http response failed")
+	}
+
+	return string(resBody), nil
 }
 
 func getHTTPBody(filename string) (httpBody string, err error) {
@@ -85,7 +99,8 @@ func main() {
 
 	totalCount = 1
 	for i := 0; i < totalCount; i++ {
-		go httpGet(*url, body)
+		// go httpPost(*url, body)
+		httpGet(*url)
 	}
 
 	i := 0
