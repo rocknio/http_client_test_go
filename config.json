@@ -5,5 +5,5 @@
   "method": "GET",
   "post_content": "",
   "total_count": 1000,
-  "count_per_second": 100
+  "count_per_second": 500
 }
