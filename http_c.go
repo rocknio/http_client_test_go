@@ -1,153 +1,80 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
-	"errors"
 	"flag"
-	"fmt"
-	"io/ioutil"
-	"log"
-	"net/http"
-	"os"
 	"runtime"
-	"strconv"
+	"time"
 )
 
 var (
-	logFileName = flag.String("log", "http_c.log", "Log file name")
-	url         = flag.String("url", "http://192.168.1.8:9000/", "http url")
-	bodyFile    = flag.String("body", "body.json", "http body data")
-	qChan       chan int
-	totalCount  int
+	logFileName = flag.String("log", "test.log", "Log file name")
+	cfgFileNmae = flag.String("config", "config.json", "Config file name")
 )
 
-type smsContent struct {
-	Template  string `json:"template"`
-	DestTelno string `json:"dest_telno"`
-	Content   string `json:"content"`
-}
-
-func httpPost(url string, body string, idx int) {
-	client := &http.Client{}
-	bodySlice := []byte(body)
-
-	specURL := url + "?name=" + strconv.Itoa(idx)
-	req, err := http.NewRequest("POST", specURL, bytes.NewBuffer(bodySlice))
-	if err != nil {
-		log.Printf("new request failed")
-		qChan <- 1
-		return
-	}
-
-	req.Header.Add("Basic", "abcd")
-	ret, err := client.Do(req)
-	if err != nil {
-		log.Printf("do request failed")
-		qChan <- 1
-		return
-	}
-
-	response, err := ioutil.ReadAll(ret.Body)
-	if err != nil {
-		log.Printf("get http response failed")
-		qChan <- 1
-		return
-	}
-
-	log.Printf("idx = %d, %s\n", idx, string(response))
-	qChan <- 1
-}
-
-func httpGet(url string, idx int) {
-	response, err := http.Get(url)
-	if err != nil {
-		log.Printf("http get failed")
-		return
-	}
-
-	resBody, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		log.Printf("read http response failed")
-		return
-	}
-
-	log.Printf("idx = %d, %s\n", idx, string(resBody))
-	qChan <- 1
-}
-
-func getHTTPBody(filename string) (httpBody string, err error) {
-	dataFile, err := os.Open(filename)
-	if err != nil {
-		return "", errors.New("open http data file failed")
-	}
-
-	defer dataFile.Close()
-
-	content, err := ioutil.ReadAll(dataFile)
-	if err != nil {
-		return "", errors.New("read http data failed")
-	}
-
-	return string(content), nil
-}
-
-func parseJSON(content string) {
-	var tmp smsContent
-	json.Unmarshal([]byte(content), &tmp)
-	fmt.Printf("%v", tmp)
-
-	var f interface{}
-	json.Unmarshal([]byte(content), &f)
-	m := f.(map[string]interface{})
-	for k, v := range m {
-		switch vv := v.(type) {
-		case string:
-			fmt.Printf("%v is %v", k, vv)
-
-		default:
-			fmt.Println(k, "is of a type I don't know how to handle")
-		}
-	}
+func printTestInfo(testCase TestCase) {
+	Logger.Infof("TotalCount = %d, Succ = %d, Fail = %d\n",
+		testCase.TotalCount, testCase.TestInfo.SuccCount, testCase.TestInfo.FailCount)
 }
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	flag.Parse()
 
-	// 读取http_body内容
-	body, err := getHTTPBody(*bodyFile)
+	// 日志设置
+	err := InitLogger(*logFileName)
 	if err != nil {
-		log.Fatalf("%s", err)
 		return
 	}
 
-	//set logfile
-	logFile, logErr := os.OpenFile(*logFileName, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0666)
-	if logErr != nil {
-		fmt.Println("Fail to find", *logFile, "Http Client Test start Failed")
-		os.Exit(1)
-	}
-	log.SetOutput(logFile)
-	log.SetFlags(log.LstdFlags | log.Lmicroseconds | log.Lshortfile)
-
-	log.Printf("%s\n", body)
-	parseJSON(body)
-
-	qChan = make(chan int)
-
-	totalCount = 100
-	for i := 0; i < totalCount; i++ {
-		// go httpGet(*url, i)
-		go httpPost(*url, body, i)
+	// 读取配置文件
+	testCase, err := ParseConfig(*cfgFileNmae)
+	if err != nil {
+		return
 	}
 
-	i := 0
+	// 打印测试开始
+	Logger.Info("*******************************************************************************************************\n")
+	Logger.Infof("TEST = %s, Start......", testCase.TestName)
+
+	statChan := make(chan int, 10000)
+
+	// 启动一个协程，执行测试用例
+	ticker := time.NewTicker(100 * time.Millisecond)
+	go func() {
+		testCase.TestInfo.StartTime = time.Now()
+		for _ = range ticker.C {
+			DoTest(testCase, statChan)
+		}
+	}()
+
+	// 启动一个协程，每秒打印测试过程
+	printTicker := time.NewTicker(time.Second)
+	go func() {
+		for _ = range printTicker.C {
+			go printTestInfo(testCase)
+		}
+	}()
+
+	//
 	for {
-		<-qChan
-		i++
-		if i >= totalCount {
+		httpRespCode := <-statChan
+		if httpRespCode == 200 {
+			testCase.TestInfo.SuccCount++
+		} else {
+			testCase.TestInfo.FailCount++
+		}
+
+		if testCase.TotalCount == (testCase.TestInfo.SuccCount + testCase.TestInfo.FailCount) {
 			break
 		}
 	}
+	testCase.TestInfo.EndTime = time.Now()
+
+	// 等待3秒，保证最后一次过程打印完成
+	time.Sleep(1 * time.Second)
+
+	Logger.Infof("\nTEST = %s\nTestInfo = %s,%s\nStartTime = %s\nEndTime=%s\nTotalCount = %d, Succ = %d, Fail = %d\n",
+		testCase.TestName, testCase.Method, testCase.URL, testCase.TestInfo.StartTime, testCase.TestInfo.EndTime,
+		testCase.TotalCount, testCase.TestInfo.SuccCount, testCase.TestInfo.FailCount)
+	Logger.Info("*******************************************************************************************************\n")
 }

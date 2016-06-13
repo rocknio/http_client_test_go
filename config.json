@@ -1,0 +1,9 @@
+{
+  "test_name": "readers_get",
+  "url": "http://192.168.1.8:9000/",
+  "basic": "xxxxx",
+  "method": "GET",
+  "post_content": "",
+  "total_count": 1000,
+  "count_per_second": 100
+}
