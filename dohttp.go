@@ -1,33 +1,35 @@
 package main
 
-import "net/http"
+import (
+	"bytes"
+	"net/http"
+	"strconv"
+)
 
-// func httpPost(url string, body string, idx int) {
-// 	client := &http.Client{}
-// 	bodySlice := []byte(body)
+func httpPost(url string, body string, basicStr string, statChan chan int) {
+	client := &http.Client{}
+	bodySlice := []byte(body)
 
-// 	specURL := url + "?name=" + strconv.Itoa(idx)
-// 	req, err := http.NewRequest("POST", specURL, bytes.NewBuffer(bodySlice))
-// 	if err != nil {
-// 		log.Printf("new request failed")
-// 		return
-// 	}
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(bodySlice))
+	if err != nil {
+		Logger.Errorf("new request failed, err = %s", err)
+		return
+	}
 
-// 	req.Header.Add("Basic", "abcd")
-// 	ret, err := client.Do(req)
-// 	if err != nil {
-// 		log.Printf("do request failed")
-// 		return
-// 	}
+	req.Header.Add("Basic", basicStr)
+	response, err := client.Do(req)
+	if err != nil {
+		Logger.Errorf("do request failed, err = %s", err)
+		return
+	}
 
-// 	response, err := ioutil.ReadAll(ret.Body)
-// 	if err != nil {
-// 		log.Printf("get http response failed")
-// 		return
-// 	}
+	// 关闭连接
+	defer response.Body.Close()
 
-// 	log.Printf("idx = %d, %s\n", idx, string(response))
-// }
+	// ret, _ := ioutil.ReadAll(response.Body)
+	// fmt.Printf("url = %s, ret = %s\n", url, string(ret))
+	statChan <- response.StatusCode
+}
 
 func httpGet(url string, statChan chan int) {
 	client := &http.Client{}
@@ -57,6 +59,11 @@ func DoTest(testCase TestCase, statChan chan int) {
 	case "GET", "get", "Get":
 		for i := 0; i < (testCase.CountPerSecond / 10); i++ {
 			go httpGet(testCase.URL, statChan)
+		}
+	case "POST", "post", "Post":
+		for i := 0; i < (testCase.CountPerSecond / 10); i++ {
+			URL := testCase.URL + "?name=" + strconv.Itoa(i)
+			go httpPost(URL, testCase.PostContent, testCase.Basic, statChan)
 		}
 	default:
 		Logger.Errorf("Method is invalid, err = %s", testCase.Method)
