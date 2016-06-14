@@ -31,7 +31,7 @@ func httpPost(url string, body string, basicStr string, statChan chan int) {
 	statChan <- response.StatusCode
 }
 
-func httpGet(url string, statChan chan int) {
+func httpGet(url string, basicStr string, statChan chan int) {
 	client := &http.Client{}
 
 	req, err := http.NewRequest("GET", url, nil)
@@ -40,7 +40,7 @@ func httpGet(url string, statChan chan int) {
 		return
 	}
 
-	req.Header.Add("Basic", "abcd")
+	req.Header.Add("Basic", basicStr)
 	response, err := client.Do(req)
 	if err != nil {
 		Logger.Errorf("do request failed, err = %s", err)
@@ -58,7 +58,7 @@ func DoTest(testCase TestCase, statChan chan int) {
 	switch testCase.Method {
 	case "GET", "get", "Get":
 		for i := 0; i < (testCase.CountPerSecond / 10); i++ {
-			go httpGet(testCase.URL, statChan)
+			go httpGet(testCase.URL, testCase.Basic, statChan)
 		}
 	case "POST", "post", "Post":
 		for i := 0; i < (testCase.CountPerSecond / 10); i++ {
