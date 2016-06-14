@@ -73,7 +73,7 @@ func main() {
 	// 等待1秒，保证最后一次过程打印完成
 	time.Sleep(1 * time.Second)
 
-	Logger.Infof("\nTEST = %s\nTestInfo = %s,%s\nStartTime = %s\nEndTime = %s\nTotalCount = %d, Succ = %d, Fail = %d\n",
+	Logger.Infof("\nTEST = %s\nTestInfo = %s,%s\nStartTime = %s\nEndTime   = %s\nTotalCount = %d, Succ = %d, Fail = %d\n",
 		testCase.TestName, testCase.Method, testCase.URL, testCase.TestInfo.StartTime, testCase.TestInfo.EndTime,
 		testCase.TotalCount, testCase.TestInfo.SuccCount, testCase.TestInfo.FailCount)
 	Logger.Info("*******************************************************************************************************\n")
