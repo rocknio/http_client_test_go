@@ -3,7 +3,7 @@
 - 本程序作为HTTP客户端，通过config.json配置，进行HTTP接口测试
 
 ## 配置说明
-- config.json
+- **config.json**
 ```json
 {
   "test_name": "readers_get",
@@ -15,7 +15,8 @@
   "count_per_second": 100
 }
 ```
-- 说明：
+- **说明：**
+
 >"test_name":        测试名称
 
 >"url":              http的url
