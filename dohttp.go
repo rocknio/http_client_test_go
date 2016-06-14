@@ -16,7 +16,8 @@ func httpPost(url string, body string, basicStr string, statChan chan int) {
 		return
 	}
 
-	req.Header.Add("Basic", basicStr)
+	authStr := "Basic " + basicStr
+	req.Header.Add("Authorization", authStr)
 	response, err := client.Do(req)
 	if err != nil {
 		Logger.Errorf("do request failed, err = %s", err)
@@ -40,7 +41,8 @@ func httpGet(url string, basicStr string, statChan chan int) {
 		return
 	}
 
-	req.Header.Add("Basic", basicStr)
+	authStr := "Basic " + basicStr
+	req.Header.Add("Authorization", authStr)
 	response, err := client.Do(req)
 	if err != nil {
 		Logger.Errorf("do request failed, err = %s", err)
