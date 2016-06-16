@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"net/http"
-	"strconv"
 )
 
 func httpPost(url string, body string, basicStr string, statChan chan int) {
@@ -64,7 +63,7 @@ func DoTest(testCase TestCase, statChan chan int) {
 		}
 	case "POST", "post", "Post":
 		for i := 0; i < (testCase.CountPerSecond / 10); i++ {
-			URL := testCase.URL + "?name=" + strconv.Itoa(i)
+			URL := testCase.URL // + "?name=" + strconv.Itoa(i)
 			go httpPost(URL, testCase.PostContent, testCase.Basic, statChan)
 		}
 	default:
