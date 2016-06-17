@@ -1,9 +1,9 @@
 {
-  "test_name": "readers_get",
-  "url": "http://192.168.1.8:9000/",
-  "basic": "xxxxx",
+  "test_name": "send_sms",
+  "url": "http://192.168.1.204:7008/v1/sms",
+  "basic": "NkM1QkJEQkREQTFEQzk4OEJGQUY4NDE4RjMwMDE2M0M6MWZkMThkNTNiYzBhZDc3MjlkYTY0MTcyOTlmYTQ1MzllOTUzY2JhMg==",
   "method": "POST",
-  "post_content": "123",
+  "post_content": "{\"template\": \"1033\",\"dest_telno\": \"15922712265\",\"content\": \"【瑞章物联网】验证码为1111，您正在通过手机注册瑞章物联网开放平台（工作人员不会向您索取，请勿泄露）\"}",
   "total_count": 1000,
-  "count_per_second": 100
+  "count_per_second": 50
 }
