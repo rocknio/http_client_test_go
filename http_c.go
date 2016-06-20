@@ -43,7 +43,10 @@ func main() {
 	go func() {
 		testCase.TestInfo.StartTime = time.Now()
 		for _ = range ticker.C {
-			DoTest(testCase, statChan)
+			if testCase.TestInfo.SendCount < testCase.TotalCount {
+				DoTest(testCase, statChan)
+				testCase.TestInfo.SendCount += (testCase.CountPerSecond / 10)
+			}
 		}
 	}()
 

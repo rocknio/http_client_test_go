@@ -10,6 +10,7 @@ import (
 type testInfo struct {
 	StartTime time.Time // 测试开始时间
 	EndTime   time.Time // 测试结束时间
+	SendCount int       // 已发送请求数
 	SuccCount int       // 成功次数
 	FailCount int       // 失败次数
 }
