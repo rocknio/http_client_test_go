@@ -11,17 +11,22 @@ func httpPost(url string, body string, basicStr string, statChan chan int) {
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(bodySlice))
 	if err != nil {
+		statChan <- 500
 		Logger.Errorf("new request failed, err = %s", err)
 		return
 	}
 
 	authStr := "Basic " + basicStr
 	req.Header.Add("Authorization", authStr)
+	Logger.Infof("*****send post*****")
 	response, err := client.Do(req)
 	if err != nil {
 		Logger.Errorf("do request failed, err = %s", err)
+		statChan <- 500
 		return
 	}
+
+	Logger.Infof("*****recv post response*****")
 
 	// 关闭连接
 	defer response.Body.Close()
@@ -36,6 +41,7 @@ func httpGet(url string, basicStr string, statChan chan int) {
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
+		statChan <- 500
 		Logger.Errorf("new request failed, err = %s", err)
 		return
 	}
@@ -44,6 +50,7 @@ func httpGet(url string, basicStr string, statChan chan int) {
 	req.Header.Add("Authorization", authStr)
 	response, err := client.Do(req)
 	if err != nil {
+		statChan <- 500
 		Logger.Errorf("do request failed, err = %s", err)
 		return
 	}
