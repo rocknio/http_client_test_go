@@ -25,14 +25,7 @@ func httpPost(url string, body string, basicStr string, statChan chan int) {
 		statChan <- 500
 		return
 	}
-	/*
-		ret, err := ioutil.ReadAll(response.Body)
-		if err != nil {
-			Logger.Errorf("Read Response failed! err = %s", err)
-		} else {
-			Logger.Infof("*****recv post response*****, status = %d, resp = %s", response.StatusCode, string(ret))
-		}
-	//*/
+
 	// 关闭连接
 	defer response.Body.Close()
 
