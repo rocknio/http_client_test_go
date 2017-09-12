@@ -3,7 +3,7 @@
   "url": "http://192.168.1.8:7000/v1/sms",
   "basic": "YWJjZA==",
   "method": "POST",
-  "post_content": "{\"template\": \"1033\",\"dest_telno\": \"15922712265\",\"content\": \"【瑞章物联网】验证码为1111，您正在通过手机注册瑞章物联网开放平台（工作人员不会向您索取，请勿泄露）\"}",
+  "post_content": "",
   "total_count": 1,
   "count_per_second": 10
 }
