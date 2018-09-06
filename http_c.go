@@ -8,7 +8,7 @@ import (
 
 var (
 	logFileName = flag.String("log", "test.log", "Log file name")
-	cfgFileNmae = flag.String("config", "config.json", "Config file name")
+	cfgFileName = flag.String("config", "config.json", "Config file name")
 )
 
 func printTestInfo(testCase TestCase) {
@@ -27,7 +27,7 @@ func main() {
 	}
 
 	// 读取配置文件
-	testCase, err := ParseConfig(*cfgFileNmae)
+	testCase, err := ParseConfig(*cfgFileName)
 	if err != nil {
 		return
 	}
@@ -42,10 +42,10 @@ func main() {
 	ticker := time.NewTicker(100 * time.Millisecond)
 	go func() {
 		testCase.TestInfo.StartTime = time.Now()
-		for _ = range ticker.C {
+		for range ticker.C {
 			if testCase.TestInfo.SendCount < testCase.TotalCount {
 				DoTest(testCase, statChan)
-				testCase.TestInfo.SendCount += (testCase.CountPerSecond / 10)
+				testCase.TestInfo.SendCount += testCase.CountPerSecond / 10
 			}
 		}
 	}()
@@ -53,7 +53,7 @@ func main() {
 	// 启动一个协程，每秒打印测试过程
 	printTicker := time.NewTicker(time.Second)
 	go func() {
-		for _ = range printTicker.C {
+		for range printTicker.C {
 			go printTestInfo(testCase)
 		}
 	}()
